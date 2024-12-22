@@ -1,4 +1,5 @@
 xgboost
+scipy
 xgboost-cpu
 pandas
 scikit-learn
