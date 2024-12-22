@@ -11,6 +11,7 @@ def load_data_from_db(db_file):
     con = sqlite3.connect(db_file)
     df = pd.read_sql_query("SELECT * FROM tablename", con)
     con.close()
+    print(db_file, df.columns.tolist())
     return df
 
 # Step 2: Preprocess the data
@@ -72,9 +73,16 @@ def train_model(X, y):
 
     return model
 
+#####
 # Step 4: Load test set and make predictions
-def predict_test_set(model, le_prompt, le_response_a, le_response_b, test_file):
-    test_df = pd.read_csv(test_file)
+def predict_test_set(model, le_prompt, le_response_a, le_response_b, db_file):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_file)
+    query = "SELECT * FROM tablename"  # Replace 'test_table' with your actual table name
+    test_df = pd.read_sql_query(query, conn)
+    conn.close()
+
+    test_df = test_df.drop(['id'], axis=1)
 
     # Encode the test dataframe using the same LabelEncoders
     test_df['prompt_encoded'] = le_prompt.transform(test_df['prompt'])
@@ -94,7 +102,7 @@ def predict_test_set(model, le_prompt, le_response_a, le_response_b, test_file):
 
 if __name__ == "__main__":
     # Load, preprocess, and split the data
-    db_file = 'database.db'
+    db_file = 'training.db'
     df = load_data_from_db(db_file)
     X, y, le_prompt, le_response_a, le_response_b = preprocess_data(df)
 
@@ -102,8 +110,8 @@ if __name__ == "__main__":
     model = train_model(X, y)
 
     # Predict on the test set
-    test_file = 'test.csv'
-    predictions = predict_test_set(model, le_prompt, le_response_a, le_response_b, test_file)
+    predictions = predict_test_set(model, le_prompt, le_response_a, le_response_b, 'testing.db')
 
     # Display predictions
     print(predictions[['id', 'predicted_winner']])
+#####
